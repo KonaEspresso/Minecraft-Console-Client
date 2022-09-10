@@ -704,6 +704,21 @@ namespace MinecraftClient.Protocol.Handlers
                     case 18: // Pose
                         value = ReadNextVarInt(cache);
                         break;
+                    case 19: // Cat Variant
+                        value = ReadNextVarInt(cache);
+                        break;
+                    case 20: // Frog Variant
+                        value = ReadNextVarInt(cache);
+                        break;
+                    case 21: // GlobalPos (Dimension Identifier & Location)
+                        List<object> g = new List<object>();
+                        g.Add(ReadNextString(cache));
+                        g.Add(ReadNextLocation(cache));
+                        value = g;
+                        break;
+                    case 22: // Painting Variant
+                        value = ReadNextVarInt(cache);
+                        break;
                     default:
                         throw new System.IO.InvalidDataException("Unknown Metadata Type ID " + type + ". Is this up to date for new MC Version?");
                 }
