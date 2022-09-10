@@ -371,7 +371,8 @@ namespace MinecraftClient.Protocol.Handlers
                                 for (int i = 0; i < worldCount; i++)
                                     dataTypes.ReadNextString(packetData);                 // Dimension Names (World Names) - 1.16 and above
                                 var registryCodec = dataTypes.ReadNextNbt(packetData);    // Registry Codec (Dimension Codec) - 1.16 and above
-                                World.StoreDimensionList(registryCodec);
+                                if (handler.GetTerrainEnabled())
+                                    World.StoreDimensionList(registryCodec);
                             }
 
                             // Current dimension
@@ -380,12 +381,13 @@ namespace MinecraftClient.Protocol.Handlers
                             //   String identifier: 1.16 and 1.16.1
                             //   varInt: [1.9.1 to 1.15.2]
                             //   byte: below 1.9.1
+                            Dictionary<string, object>? dimensionType = null;
                             if (protocolVersion >= MC_1_16_Version)
                             {
                                 if (protocolVersion >= MC_1_19_Version)
                                     dataTypes.ReadNextString(packetData);     // Dimension Type: Identifier
                                 else if (protocolVersion >= MC_1_16_2_Version)
-                                    dataTypes.ReadNextNbt(packetData);        // Dimension Type: NBT Tag Compound
+                                    dimensionType = dataTypes.ReadNextNbt(packetData);        // Dimension Type: NBT Tag Compound
                                 else
                                     dataTypes.ReadNextString(packetData);
                                 this.currentDimension = 0;
@@ -401,7 +403,12 @@ namespace MinecraftClient.Protocol.Handlers
                             if (protocolVersion >= MC_1_16_Version)
                             {
                                 string dimensionName = dataTypes.ReadNextString(packetData); // Dimension Name (World Name) - 1.16 and above
-                                World.SetDimension(dimensionName);
+                                if (handler.GetTerrainEnabled())
+                                {
+                                    if (protocolVersion >= MC_1_16_2_Version && protocolVersion < MC_1_19_Version)
+                                        World.StoreOneDimension(dimensionName, dimensionType!);
+                                    World.SetDimension(dimensionName);
+                                }
                             }
 
                             if (protocolVersion >= MC_1_15_Version)
@@ -594,12 +601,13 @@ namespace MinecraftClient.Protocol.Handlers
                             }
                             break;
                         case PacketTypesIn.Respawn:
+                            Dictionary<string, object>? dimensionTypeRespawn = null;
                             if (protocolVersion >= MC_1_16_Version)
                             {
                                 if (protocolVersion >= MC_1_19_Version)
                                     dataTypes.ReadNextString(packetData);     // Dimension Type: Identifier
                                 else if (protocolVersion >= MC_1_16_2_Version)
-                                    dataTypes.ReadNextNbt(packetData);        // Dimension Type: NBT Tag Compound
+                                    dimensionTypeRespawn = dataTypes.ReadNextNbt(packetData);        // Dimension Type: NBT Tag Compound
                                 else
                                     dataTypes.ReadNextString(packetData);
                                 this.currentDimension = 0;
@@ -612,7 +620,12 @@ namespace MinecraftClient.Protocol.Handlers
                             if (protocolVersion >= MC_1_16_Version)
                             {
                                 string dimensionName = dataTypes.ReadNextString(packetData); // Dimension Name (World Name) - 1.16 and above
-                                World.SetDimension(dimensionName);
+                                if (handler.GetTerrainEnabled())
+                                {
+                                    if (protocolVersion >= MC_1_16_2_Version && protocolVersion < MC_1_19_Version)
+                                        World.StoreOneDimension(dimensionName, dimensionTypeRespawn!);
+                                    World.SetDimension(dimensionName);
+                                }
                             }
 
                             if (protocolVersion < MC_1_14_Version)
@@ -1261,7 +1274,6 @@ namespace MinecraftClient.Protocol.Handlers
                             if (protocolVersion >= MC_1_17_Version)
                             {
                                 forced = dataTypes.ReadNextBool(packetData);
-                                string forcedMessage = ChatParser.ParseText(dataTypes.ReadNextString(packetData));
                                 bool hasPromptMessage = dataTypes.ReadNextBool(packetData);   // Has Prompt Message (Boolean) - 1.17 and above
                                 if (hasPromptMessage)
                                     dataTypes.SkipNextString(packetData); // Prompt Message (Optional Chat) - 1.17 and above
@@ -2621,7 +2633,7 @@ namespace MinecraftClient.Protocol.Handlers
             catch (ObjectDisposedException) { return false; }
         }
 
-        public bool SendWindowAction(int windowId, int slotId, WindowActionType action, Item item, List<Tuple<short, Item>> changedSlots, int stateId)
+        public bool SendWindowAction(int windowId, int slotId, WindowActionType action, Item? item, List<Tuple<short, Item?>> changedSlots, int stateId)
         {
             try
             {
@@ -2656,7 +2668,7 @@ namespace MinecraftClient.Protocol.Handlers
                     case WindowActionType.AddDragMiddle: button = 9; mode = 5; item = new Item(ItemType.Null, 0, null); break;
                 }
 
-                List<byte> packet = new List<byte>();
+                List<byte> packet = new();
                 packet.Add((byte)windowId); // Window ID
 
                 // 1.18+

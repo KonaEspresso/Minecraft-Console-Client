@@ -756,7 +756,7 @@ namespace MinecraftClient.Protocol.Handlers
         /// </summary>
         /// <param name="nbt">Dictionary to encode as Nbt</param>
         /// <returns>Byte array for this NBT tag</returns>
-        public byte[] GetNbt(Dictionary<string, object> nbt)
+        public byte[] GetNbt(Dictionary<string, object>? nbt)
         {
             return GetNbt(nbt, true);
         }
@@ -767,7 +767,7 @@ namespace MinecraftClient.Protocol.Handlers
         /// <param name="nbt">Dictionary to encode as Nbt</param>
         /// <param name="root">TRUE if starting a new NBT tag, FALSE if processing a nested NBT tag</param>
         /// <returns>Byte array for this NBT tag</returns>
-        private byte[] GetNbt(Dictionary<string, object> nbt, bool root)
+        private byte[] GetNbt(Dictionary<string, object>? nbt, bool root)
         {
             if (nbt == null || nbt.Count == 0)
                 return new byte[] { 0 }; // TAG_End
@@ -1080,9 +1080,9 @@ namespace MinecraftClient.Protocol.Handlers
         /// <param name="item">Item</param>
         /// <param name="itemPalette">Item Palette</param>
         /// <returns>Item slot representation</returns>
-        public byte[] GetItemSlot(Item item, ItemPalette itemPalette)
+        public byte[] GetItemSlot(Item? item, ItemPalette itemPalette)
         {
-            List<byte> slotData = new List<byte>();
+            List<byte> slotData = new();
             if (protocolversion > Protocol18Handler.MC_1_13_Version)
             {
                 // MC 1.13 and greater
